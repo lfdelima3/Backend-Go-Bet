@@ -57,6 +57,26 @@ func UpdateCampeonato(c *gin.Context) {
 	}
 
 	if err := config.DB.Save(&campeonato).Error; err != nil {
-
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar campeonato"})
+		return
 	}
+
+	c.JSON(http.StatusOK, campeonato)
+}
+
+func DeleteCampeonato(c *gin.Context) {
+	var campeonato model.Campeonato
+	id := c.Param("id")
+
+	if err := config.DB.First(&campeonato, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Campeonato não encontrado"})
+		return
+	}
+
+	if err := config.DB.Delete(&campeonato, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar campeonato"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Campeonato deletado com sucesso"})
 }
