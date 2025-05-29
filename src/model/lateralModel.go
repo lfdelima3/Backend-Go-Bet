@@ -2,52 +2,58 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
-type Goal struct {
+type Lateral struct {
+	gorm.Model
+	Tempo            time.Time `json:"tempo"`
+	Turno            uint8     `json:"turno"`
+	FKPartidaClubeID uint      `json:"fk_partida_clube_id"`
+	FKJogadorID      uint      `json:"fk_jogador_id"`
+}
+
+type ThrowIn struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	MatchID     uint      `json:"match_id" validate:"required"`
 	TeamID      uint      `json:"team_id" validate:"required"`
 	PlayerID    uint      `json:"player_id" validate:"required"`
 	Minute      int       `json:"minute" validate:"required,min=1,max=120"`
-	IsOwnGoal   bool      `json:"is_own_goal"`
-	IsPenalty   bool      `json:"is_penalty"`
-	AssistID    uint      `json:"assist_id" validate:"omitempty"`
+	Location    string    `json:"location" validate:"required,oneof=defensive midfield offensive"`
+	Result      string    `json:"result" validate:"required,oneof=successful unsuccessful"`
 	Description string    `json:"description" validate:"omitempty,max=200"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-type GoalCreate struct {
+type ThrowInCreate struct {
 	MatchID     uint   `json:"match_id" validate:"required"`
 	TeamID      uint   `json:"team_id" validate:"required"`
 	PlayerID    uint   `json:"player_id" validate:"required"`
 	Minute      int    `json:"minute" validate:"required,min=1,max=120"`
-	IsOwnGoal   bool   `json:"is_own_goal"`
-	IsPenalty   bool   `json:"is_penalty"`
-	AssistID    uint   `json:"assist_id" validate:"omitempty"`
+	Location    string `json:"location" validate:"required,oneof=defensive midfield offensive"`
+	Result      string `json:"result" validate:"required,oneof=successful unsuccessful"`
 	Description string `json:"description" validate:"omitempty,max=200"`
 }
 
-type GoalUpdate struct {
+type ThrowInUpdate struct {
 	TeamID      uint   `json:"team_id" validate:"omitempty"`
 	PlayerID    uint   `json:"player_id" validate:"omitempty"`
 	Minute      int    `json:"minute" validate:"omitempty,min=1,max=120"`
-	IsOwnGoal   bool   `json:"is_own_goal"`
-	IsPenalty   bool   `json:"is_penalty"`
-	AssistID    uint   `json:"assist_id" validate:"omitempty"`
+	Location    string `json:"location" validate:"omitempty,oneof=defensive midfield offensive"`
+	Result      string `json:"result" validate:"omitempty,oneof=successful unsuccessful"`
 	Description string `json:"description" validate:"omitempty,max=200"`
 }
 
-type GoalResponse struct {
+type ThrowInResponse struct {
 	ID          uint      `json:"id"`
 	MatchID     uint      `json:"match_id"`
 	TeamID      uint      `json:"team_id"`
 	PlayerID    uint      `json:"player_id"`
 	Minute      int       `json:"minute"`
-	IsOwnGoal   bool      `json:"is_own_goal"`
-	IsPenalty   bool      `json:"is_penalty"`
-	AssistID    uint      `json:"assist_id"`
+	Location    string    `json:"location"`
+	Result      string    `json:"result"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
