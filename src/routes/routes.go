@@ -44,4 +44,29 @@ func SetupGamer(r *gin.Engine) {
 		aposta.GET("/", controller.GetApostasUsuario)
 		aposta.DELETE("/:id", controller.DeleteAposta)
 	}
+
+	partida := r.Group("/partida")
+	{
+		partida.POST("/criar", controller.CreatePartida)
+		partida.GET("/", controller.GetPartidas)
+		partida.GET("/:id", controller.GetPartidaByID)
+		partida.PUT("/atualizar:id", controller.UpdatePartida)
+		partida.DELETE("/delete:id", controller.DeletePartida)
+	}
+
+	partidaClube := r.Group("/partidaClube")
+	{
+		partidaClube.POST("/criar", controller.CreatePartidaClube)
+		partidaClube.GET("/", controller.GetPartidasClubes)
+		partidaClube.DELETE("/delete:id", controller.DeletePartidaClube)
+	}
+
+	gols := r.Group("/gols")
+	{
+		gols.POST("/criar", controller.CreateGol)
+		gols.GET("/", controller.GetGols)
+		gols.GET("/:id", controller.GetGolByID)
+		gols.PUT("/atualizar:id", controller.UpdateGol)
+		gols.DELETE("/delete:id", controller.DeleteGol)
+	}
 }
