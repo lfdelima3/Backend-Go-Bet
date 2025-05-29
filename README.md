@@ -2,7 +2,6 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21-blue.svg)](https://golang.org)
 [![Gin Framework](https://img.shields.io/badge/Gin-v1.9.1-lightblue.svg)](https://gin-gonic.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Este é um projeto backend desenvolvido em Go, utilizando uma arquitetura limpa e moderna para gerenciamento de apostas.
 
