@@ -252,10 +252,9 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 
 ## 👥 Autores
 
-- **Luis Fernando Antunes de Lima** - [lfdelima3](https://github.com/lfdelima3)
+- **Luis Fernando Antunes de Lima** - [lfdelima](https://github.com/lfdelima3)
 
-- **Ruan Henrique Brunhera Aronchi** - [RuanBrunhera]
-(https://github.com/RuanBrunhera)
+- **Ruan Henrique Brunhera Aronchi** - [RuanBrunhera](https://github.com/RuanBrunhera)
 
 ## 🙏 Agradecimentos
 
