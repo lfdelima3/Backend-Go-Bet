@@ -7,15 +7,20 @@ import (
 	"github.com/lfdelima3/Backend-Go-Bet/src/controller"
 	"github.com/lfdelima3/Backend-Go-Bet/src/middleware"
 	"github.com/lfdelima3/Backend-Go-Bet/src/util"
+	"gorm.io/gorm"
 )
 
-func SetupRouter(r *gin.Engine, cache *util.Cache) {
+func SetupRouter(r *gin.Engine, cache *util.Cache, db *gorm.DB, promotionController *controller.PromotionController) {
 	// Configuração do rate limiter
 	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
 	r.Use(rateLimiter.RateLimit())
 
 	// Configuração do cache middleware
 	cacheMiddleware := middleware.NewCacheMiddleware(cache)
+
+	// Inicialização dos controllers
+	tournamentController := controller.NewTournamentController(db)
+	matchEventController := controller.NewMatchEventController(db)
 
 	// Rotas públicas
 	r.POST("/auth/login", controller.Login)
@@ -28,7 +33,7 @@ func SetupRouter(r *gin.Engine, cache *util.Cache) {
 		// Rotas de usuário
 		users := auth.Group("/users")
 		{
-			users.GET("/", cacheMiddleware.CacheGet(5*time.Minute), controller.ListarUsuarios)
+			users.GET("/", cacheMiddleware.CacheGet(5*time.Minute), controller.ListUsers)
 			users.GET("/:id", cacheMiddleware.CacheGetWithKey(util.UserCacheKey, 5*time.Minute), controller.GetUser)
 			users.PUT("/:id", cacheMiddleware.InvalidateCache(util.UserCacheKey), controller.UpdateUser)
 			users.DELETE("/:id", cacheMiddleware.InvalidateCache(util.UserCacheKey), controller.DeleteUser)
@@ -37,39 +42,39 @@ func SetupRouter(r *gin.Engine, cache *util.Cache) {
 		// Rotas de times
 		teams := auth.Group("/teams")
 		{
-			teams.POST("/", cacheMiddleware.InvalidateCache(util.TeamsCacheKey), controller.CreateClube)
-			teams.GET("/", cacheMiddleware.CacheGet(util.TeamCacheExpiry), controller.GetClubes)
-			teams.GET("/:id", cacheMiddleware.CacheGetWithKey(util.TeamCacheKey, util.TeamCacheExpiry), controller.GetClubePorID)
-			teams.PUT("/:id", cacheMiddleware.InvalidateCache(util.TeamCacheKey), controller.UpdateClube)
-			teams.DELETE("/:id", cacheMiddleware.InvalidateCache(util.TeamCacheKey), controller.DeleteClube)
+			teams.POST("/", cacheMiddleware.InvalidateCache(util.TeamsCacheKey), controller.CreateTeam)
+			teams.GET("/", cacheMiddleware.CacheGet(util.TeamCacheExpiry), controller.ListTeams)
+			teams.GET("/:id", cacheMiddleware.CacheGetWithKey(util.TeamCacheKey, util.TeamCacheExpiry), controller.GetTeam)
+			teams.PUT("/:id", cacheMiddleware.InvalidateCache(util.TeamCacheKey), controller.UpdateTeam)
+			teams.DELETE("/:id", cacheMiddleware.InvalidateCache(util.TeamCacheKey), controller.DeleteTeam)
 		}
 
 		// Rotas de campeonatos
 		tournaments := auth.Group("/tournaments")
 		{
-			tournaments.POST("/", cacheMiddleware.InvalidateCache(util.TournamentsCacheKey), controller.CreateCampeonato)
-			tournaments.GET("/", cacheMiddleware.CacheGet(util.TournamentCacheExpiry), controller.GetCampeonatos)
-			tournaments.GET("/:id", cacheMiddleware.CacheGetWithKey(util.TournamentCacheKey, util.TournamentCacheExpiry), controller.GetCampeonatosByID)
-			tournaments.PUT("/:id", cacheMiddleware.InvalidateCache(util.TournamentCacheKey), controller.UpdateCampeonato)
-			tournaments.DELETE("/:id", cacheMiddleware.InvalidateCache(util.TournamentCacheKey), controller.DeleteCampeonato)
+			tournaments.POST("/", cacheMiddleware.InvalidateCache(util.TournamentsCacheKey), tournamentController.CreateTournament)
+			tournaments.GET("/", cacheMiddleware.CacheGet(util.TournamentCacheExpiry), tournamentController.ListTournaments)
+			tournaments.GET("/:id", cacheMiddleware.CacheGetWithKey(util.TournamentCacheKey, util.TournamentCacheExpiry), tournamentController.GetTournament)
+			tournaments.PUT("/:id", cacheMiddleware.InvalidateCache(util.TournamentCacheKey), tournamentController.UpdateTournament)
+			tournaments.DELETE("/:id", cacheMiddleware.InvalidateCache(util.TournamentCacheKey), tournamentController.DeleteTournament)
 		}
 
 		// Rotas de apostas
 		bets := auth.Group("/bets")
 		{
-			bets.POST("/", cacheMiddleware.InvalidateCache(util.UserBetsCacheKey), controller.CreateAposta)
-			bets.GET("/", cacheMiddleware.CacheGetWithKey(util.UserBetsCacheKey, util.BetCacheExpiry), controller.GetApostasUsuario)
-			bets.DELETE("/:id", cacheMiddleware.InvalidateCache(util.BetCacheKey), controller.DeleteAposta)
+			bets.POST("/", cacheMiddleware.InvalidateCache(util.UserBetsCacheKey), controller.CreateBet)
+			bets.GET("/", cacheMiddleware.CacheGetWithKey(util.UserBetsCacheKey, util.BetCacheExpiry), controller.ListUserBets)
+			bets.DELETE("/:id", cacheMiddleware.InvalidateCache(util.BetCacheKey), controller.CancelBet)
 		}
 
 		// Rotas de partidas
 		matches := auth.Group("/matches")
 		{
-			matches.POST("/", cacheMiddleware.InvalidateCache(util.MatchesCacheKey), controller.CreatePartida)
-			matches.GET("/", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetPartidas)
-			matches.GET("/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetPartidaByID)
-			matches.PUT("/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdatePartida)
-			matches.DELETE("/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeletePartida)
+			matches.POST("/", cacheMiddleware.InvalidateCache(util.MatchesCacheKey), controller.CreateMatch)
+			matches.GET("/", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.ListMatches)
+			matches.GET("/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetMatch)
+			matches.PUT("/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateMatch)
+			matches.DELETE("/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteMatch)
 		}
 
 		// Rotas de times em partidas
@@ -83,47 +88,29 @@ func SetupRouter(r *gin.Engine, cache *util.Cache) {
 		// Rotas de eventos da partida
 		matchEvents := auth.Group("/match-events")
 		{
-			// Gols
-			matchEvents.POST("/goals", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.CreateGol)
-			matchEvents.GET("/goals", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetGols)
-			matchEvents.GET("/goals/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetGolByID)
-			matchEvents.PUT("/goals/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateGol)
-			matchEvents.DELETE("/goals/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteGol)
+			matchEvents.POST("/", cacheMiddleware.InvalidateCache(util.MatchCacheKey), matchEventController.CreateEvent)
+			matchEvents.GET("/", cacheMiddleware.CacheGet(util.MatchCacheExpiry), matchEventController.ListEvents)
+			matchEvents.GET("/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), matchEventController.GetEvent)
+			matchEvents.PUT("/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), matchEventController.UpdateEvent)
+			matchEvents.DELETE("/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), matchEventController.DeleteEvent)
+		}
 
-			// Cartões
-			matchEvents.POST("/cards", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.CreateCartao)
-			matchEvents.GET("/cards", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetCartoes)
-			matchEvents.GET("/cards/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetCartaoByID)
-			matchEvents.PUT("/cards/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateCartao)
-			matchEvents.DELETE("/cards/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteCartao)
+		// Rotas de promoções
+		promotions := auth.Group("/promotions")
+		{
+			// Rotas públicas
+			promotions.GET("/active", cacheMiddleware.CacheGet(5*time.Minute), promotionController.GetActivePromotions)
+			promotions.GET("", cacheMiddleware.CacheGet(5*time.Minute), promotionController.ListPromotions)
+			promotions.GET("/:id", cacheMiddleware.CacheGetWithKey(util.PromotionCacheKey, 5*time.Minute), promotionController.GetPromotion)
 
-			// Faltas
-			matchEvents.POST("/fouls", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.CreateFalta)
-			matchEvents.GET("/fouls", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetFaltas)
-			matchEvents.GET("/fouls/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetFaltaByID)
-			matchEvents.PUT("/fouls/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateFalta)
-			matchEvents.DELETE("/fouls/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteFalta)
-
-			// Substituições
-			matchEvents.POST("/substitutions", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.CreateSubstituicao)
-			matchEvents.GET("/substitutions", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetSubstituicoes)
-			matchEvents.GET("/substitutions/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetSubstituicaoByID)
-			matchEvents.PUT("/substitutions/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateSubstituicao)
-			matchEvents.DELETE("/substitutions/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteSubstituicao)
-
-			// Laterais
-			matchEvents.POST("/throw-ins", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.CreateLateral)
-			matchEvents.GET("/throw-ins", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetLaterais)
-			matchEvents.GET("/throw-ins/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetLateralByID)
-			matchEvents.PUT("/throw-ins/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateLateral)
-			matchEvents.DELETE("/throw-ins/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteLateral)
-
-			// Escanteios
-			matchEvents.POST("/corners", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.CreateEscanteio)
-			matchEvents.GET("/corners", cacheMiddleware.CacheGet(util.MatchCacheExpiry), controller.GetEscanteios)
-			matchEvents.GET("/corners/:id", cacheMiddleware.CacheGetWithKey(util.MatchCacheKey, util.MatchCacheExpiry), controller.GetEscanteioByID)
-			matchEvents.PUT("/corners/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.UpdateEscanteio)
-			matchEvents.DELETE("/corners/:id", cacheMiddleware.InvalidateCache(util.MatchCacheKey), controller.DeleteEscanteio)
+			// Rotas protegidas (requerem autenticação e permissão de admin)
+			adminRoutes := promotions.Group("")
+			adminRoutes.Use(middleware.AdminMiddleware())
+			{
+				adminRoutes.POST("", cacheMiddleware.InvalidateCache(util.PromotionsCacheKey), promotionController.CreatePromotion)
+				adminRoutes.PUT("/:id", cacheMiddleware.InvalidateCache(util.PromotionCacheKey), promotionController.UpdatePromotion)
+				adminRoutes.DELETE("/:id", cacheMiddleware.InvalidateCache(util.PromotionCacheKey), promotionController.DeletePromotion)
+			}
 		}
 	}
 }

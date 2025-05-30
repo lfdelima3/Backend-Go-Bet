@@ -32,11 +32,11 @@ func (cm *CacheMiddleware) CacheGet(expiration time.Duration) gin.HandlerFunc {
 		cacheKey := fmt.Sprintf("cache:%s", c.Request.URL.String())
 
 		// Tenta obter do cache
-		var response interface{}
-		err := cm.cache.Get(c.Request.Context(), cacheKey, &response)
+		var cachedData interface{}
+		err := cm.cache.Get(cacheKey, &cachedData)
 		if err == nil {
 			// Se encontrou no cache, retorna o valor
-			c.JSON(http.StatusOK, response)
+			c.JSON(http.StatusOK, cachedData)
 			c.Abort()
 			return
 		}
@@ -47,9 +47,8 @@ func (cm *CacheMiddleware) CacheGet(expiration time.Duration) gin.HandlerFunc {
 		// Se a resposta foi bem sucedida, salva no cache
 		if c.Writer.Status() == http.StatusOK {
 			// Obtém a resposta do contexto
-			response := c.Keys["response"]
-			if response != nil {
-				cm.cache.Set(c.Request.Context(), cacheKey, response, expiration)
+			if response, exists := c.Get("response"); exists {
+				cm.cache.Set(cacheKey, response, expiration)
 			}
 		}
 	}
@@ -63,9 +62,9 @@ func (cm *CacheMiddleware) InvalidateCache(pattern string) gin.HandlerFunc {
 
 		// Se a operação foi bem sucedida, invalida o cache
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			// Aqui você pode implementar a lógica para invalidar chaves específicas
-			// Por exemplo, se for uma operação em times, invalidar o cache de times
-			// cm.cache.Delete(c.Request.Context(), fmt.Sprintf(pattern, id))
+			// Gera a chave do cache baseada no padrão e ID
+			cacheKey := fmt.Sprintf(pattern, c.Param("id"))
+			cm.cache.Delete(cacheKey)
 		}
 	}
 }
@@ -83,11 +82,11 @@ func (cm *CacheMiddleware) CacheGetWithKey(keyPattern string, expiration time.Du
 		cacheKey := fmt.Sprintf(keyPattern, c.Param("id"))
 
 		// Tenta obter do cache
-		var response interface{}
-		err := cm.cache.Get(c.Request.Context(), cacheKey, &response)
+		var cachedData interface{}
+		err := cm.cache.Get(cacheKey, &cachedData)
 		if err == nil {
 			// Se encontrou no cache, retorna o valor
-			c.JSON(http.StatusOK, response)
+			c.JSON(http.StatusOK, cachedData)
 			c.Abort()
 			return
 		}
@@ -98,9 +97,8 @@ func (cm *CacheMiddleware) CacheGetWithKey(keyPattern string, expiration time.Du
 		// Se a resposta foi bem sucedida, salva no cache
 		if c.Writer.Status() == http.StatusOK {
 			// Obtém a resposta do contexto
-			response := c.Keys["response"]
-			if response != nil {
-				cm.cache.Set(c.Request.Context(), cacheKey, response, expiration)
+			if response, exists := c.Get("response"); exists {
+				cm.cache.Set(cacheKey, response, expiration)
 			}
 		}
 	}

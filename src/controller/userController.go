@@ -2,17 +2,31 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
 	"github.com/lfdelima3/Backend-Go-Bet/src/model"
 	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+}
+
 // Register cria um novo usuário
 func Register(c *gin.Context) {
 	var userCreate model.UserCreate
 	if err := c.ShouldBindJSON(&userCreate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
+		return
+	}
+
+	// Validação dos dados
+	if err := validate.Struct(userCreate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -43,7 +57,7 @@ func Register(c *gin.Context) {
 
 	// Salva no banco
 	if err := config.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar usuário"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar usuário", "details": err.Error()})
 		return
 	}
 
@@ -66,6 +80,12 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var login model.UserLogin
 	if err := c.ShouldBindJSON(&login); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
+		return
+	}
+
+	// Validação dos dados
+	if err := validate.Struct(login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -95,20 +115,33 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"user": model.UserResponse{
-			ID:      user.ID,
-			Name:    user.Name,
-			Email:   user.Email,
-			Role:    user.Role,
-			Balance: user.Balance,
-			Status:  user.Status,
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			Role:      user.Role,
+			Balance:   user.Balance,
+			Status:    user.Status,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		},
 	})
 }
 
 // ListUsers retorna todos os usuários
 func ListUsers(c *gin.Context) {
+	// Paginação
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset := (page - 1) * limit
+
 	var users []model.User
-	if err := config.DB.Find(&users).Error; err != nil {
+	var total int64
+
+	// Conta o total de registros
+	config.DB.Model(&model.User{}).Count(&total)
+
+	// Busca os usuários com paginação
+	if err := config.DB.Offset(offset).Limit(limit).Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar usuários"})
 		return
 	}
@@ -128,7 +161,15 @@ func ListUsers(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"data": response,
+		"meta": gin.H{
+			"total":  total,
+			"page":   page,
+			"limit":  limit,
+			"offset": offset,
+		},
+	})
 }
 
 // GetUser retorna um usuário específico
@@ -170,6 +211,12 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Validação dos dados
+	if err := validate.Struct(update); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
+		return
+	}
+
 	// Atualiza apenas os campos fornecidos
 	if update.Name != "" {
 		user.Name = update.Name
@@ -202,7 +249,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	if err := config.DB.Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar usuário"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar usuário", "details": err.Error()})
 		return
 	}
 
@@ -232,7 +279,7 @@ func DeleteUser(c *gin.Context) {
 	// Soft delete - apenas marca como inativo
 	user.Status = "inactive"
 	if err := config.DB.Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao desativar usuário"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao desativar usuário", "details": err.Error()})
 		return
 	}
 

@@ -1,11 +1,21 @@
 package config
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
+// DB é a instância global do banco de dados
+var DB *gorm.DB
+
+// Config contém todas as configurações da aplicação
 type Config struct {
 	Server    ServerConfig
 	Database  DatabaseConfig
@@ -14,12 +24,14 @@ type Config struct {
 	Redis     RedisConfig
 }
 
+// ServerConfig contém as configurações do servidor
 type ServerConfig struct {
 	Port         string
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 }
 
+// DatabaseConfig contém as configurações do banco de dados
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -29,16 +41,19 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+// JWTConfig contém as configurações do JWT
 type JWTConfig struct {
 	SecretKey string
 	Duration  time.Duration
 }
 
+// RateLimitConfig contém as configurações de rate limiting
 type RateLimitConfig struct {
 	Requests int
 	Window   time.Duration
 }
 
+// RedisConfig contém as configurações do Redis
 type RedisConfig struct {
 	Host     string
 	Port     string
@@ -46,8 +61,9 @@ type RedisConfig struct {
 	DB       int
 }
 
+// LoadConfig carrega todas as configurações da aplicação
 func LoadConfig() *Config {
-	return &Config{
+	config := &Config{
 		Server: ServerConfig{
 			Port:         getEnv("SERVER_PORT", "8080"),
 			ReadTimeout:  getDurationEnv("SERVER_READ_TIMEOUT", 15*time.Second),
@@ -76,15 +92,29 @@ func LoadConfig() *Config {
 			DB:       getIntEnv("REDIS_DB", 0),
 		},
 	}
-}
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	// Validações de segurança
+	if config.JWT.SecretKey == "your-secret-key" {
+		log.Println("AVISO: JWT_SECRET_KEY não está configurado, usando valor padrão inseguro")
 	}
-	return defaultValue
+
+	if config.Database.Password == "postgres" {
+		log.Println("AVISO: DB_PASSWORD está usando o valor padrão, considere alterá-lo em produção")
+	}
+
+	return config
 }
 
+// getEnv retorna o valor da variável de ambiente ou o valor padrão
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
+// getIntEnv retorna o valor inteiro da variável de ambiente ou o valor padrão
 func getIntEnv(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
@@ -94,6 +124,7 @@ func getIntEnv(key string, defaultValue int) int {
 	return defaultValue
 }
 
+// getDurationEnv retorna o valor de duração da variável de ambiente ou o valor padrão
 func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 	if value := os.Getenv(key); value != "" {
 		if duration, err := time.ParseDuration(value); err == nil {
@@ -101,4 +132,28 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 		}
 	}
 	return defaultValue
+}
+
+// Connect estabelece a conexão com o banco de dados
+func Connect() {
+	config := LoadConfig()
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		config.Database.Host,
+		config.Database.Port,
+		config.Database.User,
+		config.Database.Password,
+		config.Database.DBName,
+		config.Database.SSLMode,
+	)
+
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		log.Fatalf("Falha ao conectar ao banco de dados: %v", err)
+	}
+
+	log.Println("Conexão com o banco de dados estabelecida com sucesso")
 }

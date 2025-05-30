@@ -7,6 +7,50 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+	RegisterCustomValidations(validate)
+}
+
+// ValidateStruct valida uma estrutura usando o validator
+func ValidateStruct(s interface{}) error {
+	return validate.Struct(s)
+}
+
+// GetValidationErrorMessage retorna mensagens de erro amigáveis para cada tipo de validação
+func GetValidationErrorMessage(field, tag string) string {
+	switch tag {
+	case "required":
+		return "Campo obrigatório"
+	case "email":
+		return "Email inválido"
+	case "valid_email":
+		return "Email inválido"
+	case "min":
+		return "Valor muito pequeno"
+	case "max":
+		return "Valor muito grande"
+	case "future_date":
+		return "Data deve ser futura"
+	case "past_date":
+		return "Data deve ser passada"
+	case "valid_score":
+		return "Placar inválido"
+	case "valid_odds":
+		return "Probabilidade inválida"
+	case "valid_amount":
+		return "Valor monetário inválido"
+	case "valid_team_name":
+		return "Nome do time inválido"
+	case "strong_password":
+		return "A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais"
+	default:
+		return "Campo inválido"
+	}
+}
+
 // Registra validações personalizadas
 func RegisterCustomValidations(v *validator.Validate) {
 	// Validação de data futura

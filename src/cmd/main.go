@@ -2,30 +2,35 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
-	usermodel "github.com/lfdelima3/Backend-Go-Bet/src/model"
+	"github.com/lfdelima3/Backend-Go-Bet/src/controller"
 	"github.com/lfdelima3/Backend-Go-Bet/src/routes"
+	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Erro ao carregar .env")
-	}
+	// Carrega as configurações
+	cfg := config.LoadConfig()
 
+	// Inicializa o banco de dados
 	config.Connect()
-	config.DB.AutoMigrate(&usermodel.User{})
 
-	r := gin.Default()
-	routes.SetupGamer(r)
+	// Inicializa o cache
+	cache := util.NewCache()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	// Configura o Gin
+	router := gin.Default()
+
+	// Configura os controllers
+	promotionController := controller.NewPromotionController(config.DB)
+
+	// Configura as rotas
+	routes.SetupRouter(router, cache, config.DB, promotionController)
+
+	// Inicia o servidor
+	if err := router.Run(":" + cfg.Server.Port); err != nil {
+		log.Fatalf("Erro ao iniciar servidor: %v", err)
 	}
-
-	r.Run(":" + port)
 }

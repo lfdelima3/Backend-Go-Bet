@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lfdelima3/Backend-Go-Bet/src/config"
+	"github.com/lfdelima3/Backend-Go-Bet/src/model"
 	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
@@ -23,7 +25,19 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", uint(claims["user_id"].(float64)))
+		userID := uint(claims["user_id"].(float64))
+		var user model.User
+		if err := config.DB.First(&user, userID).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Usuário não encontrado"})
+			return
+		}
+
+		if user.Status != "active" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Usuário inativo ou bloqueado"})
+			return
+		}
+
+		c.Set("user", user)
 		c.Next()
 	}
 }
