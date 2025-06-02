@@ -10,10 +10,10 @@ import (
 )
 
 type CacheMiddleware struct {
-	cache *util.Cache
+	cache util.Cache
 }
 
-func NewCacheMiddleware(cache *util.Cache) *CacheMiddleware {
+func NewCacheMiddleware(cache util.Cache) *CacheMiddleware {
 	return &CacheMiddleware{
 		cache: cache,
 	}

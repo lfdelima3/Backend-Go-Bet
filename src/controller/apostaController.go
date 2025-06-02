@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
 	"github.com/lfdelima3/Backend-Go-Bet/src/model"
+	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
 // CreateBet cria uma nova aposta
@@ -21,7 +22,7 @@ func CreateBet(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(betCreate); err != nil {
+	if err := util.ValidateStruct(betCreate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}

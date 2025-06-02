@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/lfdelima3/Backend-Go-Bet/src/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -21,7 +22,6 @@ type Config struct {
 	Database  DatabaseConfig
 	JWT       JWTConfig
 	RateLimit RateLimitConfig
-	Redis     RedisConfig
 }
 
 // ServerConfig contém as configurações do servidor
@@ -53,14 +53,6 @@ type RateLimitConfig struct {
 	Window   time.Duration
 }
 
-// RedisConfig contém as configurações do Redis
-type RedisConfig struct {
-	Host     string
-	Port     string
-	Password string
-	DB       int
-}
-
 // LoadConfig carrega todas as configurações da aplicação
 func LoadConfig() *Config {
 	config := &Config{
@@ -72,24 +64,18 @@ func LoadConfig() *Config {
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "bet_db"),
+			User:     getEnv("DB_USER", "api"),
+			Password: getEnv("DB_PASSWORD", "123456"),
+			DBName:   getEnv("DB_NAME", "betzona"),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
 		JWT: JWTConfig{
-			SecretKey: getEnv("JWT_SECRET_KEY", "your-secret-key"),
+			SecretKey: getEnv("JWT_SECRET_KEY", "AULAPAM1"),
 			Duration:  getDurationEnv("JWT_DURATION", 24*time.Hour),
 		},
 		RateLimit: RateLimitConfig{
 			Requests: getIntEnv("RATE_LIMIT_REQUESTS", 100),
 			Window:   getDurationEnv("RATE_LIMIT_WINDOW", time.Minute),
-		},
-		Redis: RedisConfig{
-			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:       getIntEnv("REDIS_DB", 0),
 		},
 	}
 
@@ -153,6 +139,11 @@ func Connect() {
 	})
 	if err != nil {
 		log.Fatalf("Falha ao conectar ao banco de dados: %v", err)
+	}
+
+	// Criar as tabelas no banco de dados
+	if err := DB.AutoMigrate(&model.User{}, &model.Team{}, &model.Tournament{}, &model.Match{}, &model.MatchTeam{}, &model.MatchEvent{}, &model.MatchStatistics{}, &model.Promotion{}); err != nil {
+		log.Fatalf("Falha ao criar tabelas: %v", err)
 	}
 
 	log.Println("Conexão com o banco de dados estabelecida com sucesso")

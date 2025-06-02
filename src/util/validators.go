@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"time"
 
+	"log"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -143,12 +145,13 @@ func validateEmail(fl validator.FieldLevel) bool {
 	return matched
 }
 
-// Valida se a senha é forte (mínimo 8 caracteres, letra maiúscula, minúscula, número e caractere especial)
+// Valida se a senha é forte (mínimo 6 caracteres)
 func validateStrongPassword(fl validator.FieldLevel) bool {
 	password, ok := fl.Field().Interface().(string)
 	if !ok {
 		return false
 	}
-	matched, _ := regexp.MatchString(`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$`, password)
+	matched, _ := regexp.MatchString(`.{6,}`, password)
+	log.Printf("Validando senha (simples): %s, resultado: %v", password, matched)
 	return matched
 }

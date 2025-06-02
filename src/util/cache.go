@@ -1,66 +1,45 @@
 package util
 
 import (
-	"context"
-	"encoding/json"
-	"log"
 	"time"
-
-	"github.com/lfdelima3/Backend-Go-Bet/src/config"
-	"github.com/redis/go-redis/v9"
 )
 
-type Cache struct {
-	client *redis.Client
-	ctx    context.Context
+// Cache é uma interface para operações de cache
+type Cache interface {
+	Set(key string, value interface{}, expiration time.Duration) error
+	Get(key string, dest interface{}) error
+	Delete(key string) error
+	Clear() error
+	Close()
 }
 
-func NewCache() *Cache {
-	config := config.LoadConfig()
-	client := redis.NewClient(&redis.Options{
-		Addr:     config.Redis.Host + ":" + config.Redis.Port,
-		Password: config.Redis.Password,
-		DB:       config.Redis.DB,
-	})
-
-	ctx := context.Background()
-
-	// Testa a conexão
-	_, err := client.Ping(ctx).Result()
-	if err != nil {
-		log.Fatalf("Falha ao conectar ao Redis: %v", err)
-	}
-
-	log.Println("Conexão com o Redis estabelecida com sucesso")
-
-	return &Cache{
-		client: client,
-		ctx:    ctx,
-	}
+// NewCache cria uma nova instância de cache
+func NewCache() Cache {
+	// Retorna um cache dummy ou baseado em memória se não usar Redis
+	return &DummyCache{}
 }
 
-func (c *Cache) Set(key string, value interface{}, expiration time.Duration) error {
-	json, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	return c.client.Set(c.ctx, key, json, expiration).Err()
+// DummyCache é uma implementação de cache que não faz nada
+type DummyCache struct{}
+
+func (d *DummyCache) Set(key string, value interface{}, expiration time.Duration) error {
+	return nil
 }
 
-func (c *Cache) Get(key string, dest interface{}) error {
-	val, err := c.client.Get(c.ctx, key).Result()
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal([]byte(val), dest)
+func (d *DummyCache) Get(key string, dest interface{}) error {
+	return nil
 }
 
-func (c *Cache) Delete(key string) error {
-	return c.client.Del(c.ctx, key).Err()
+func (d *DummyCache) Delete(key string) error {
+	return nil
 }
 
-func (c *Cache) Clear() error {
-	return c.client.FlushDB(c.ctx).Err()
+func (d *DummyCache) Clear() error {
+	return nil
+}
+
+func (d *DummyCache) Close() {
+	// Não faz nada
 }
 
 // Constantes para chaves de cache

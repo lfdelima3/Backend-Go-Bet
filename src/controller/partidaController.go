@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
 	"github.com/lfdelima3/Backend-Go-Bet/src/model"
+	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
 // CreateMatch cria uma nova partida
@@ -19,7 +20,7 @@ func CreateMatch(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(matchCreate); err != nil {
+	if err := util.ValidateStruct(matchCreate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -232,7 +233,7 @@ func UpdateMatch(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(update); err != nil {
+	if err := util.ValidateStruct(update); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}

@@ -5,17 +5,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
 	"github.com/lfdelima3/Backend-Go-Bet/src/model"
 	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
-
-var validate *validator.Validate
-
-func init() {
-	validate = validator.New()
-}
 
 // Register cria um novo usuário
 func Register(c *gin.Context) {
@@ -26,7 +19,7 @@ func Register(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(userCreate); err != nil {
+	if err := util.ValidateStruct(userCreate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -85,7 +78,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(login); err != nil {
+	if err := util.ValidateStruct(login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -212,7 +205,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(update); err != nil {
+	if err := util.ValidateStruct(update); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}

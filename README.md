@@ -5,14 +5,12 @@ API RESTful para sistema de apostas esportivas desenvolvida em Go, com foco em p
 ## ✨ Características
 
 - 🔐 Autenticação JWT com refresh token
-- 🚀 Cache com Redis para melhor performance
 - ⚡ Rate Limiting para proteção contra abusos
 - 📝 Logging estruturado com Zap
 - 📚 Documentação Swagger
 - ✅ Validação de dados robusta
 - 🛡️ Tratamento de erros centralizado
 - 🗄️ Migrações automáticas do banco de dados
-- 🔄 Middleware de cache inteligente
 - 👮‍♂️ Middleware de autenticação e autorização
 - 🎯 Validação de dados com mensagens personalizadas
 - 🔍 Busca avançada com filtros
@@ -26,7 +24,6 @@ API RESTful para sistema de apostas esportivas desenvolvida em Go, com foco em p
 
 - Go 1.21 ou superior
 - PostgreSQL 15 ou superior
-- Redis 7 ou superior
 
 ## 🚀 Configuração
 
@@ -93,7 +90,7 @@ src/
 ├── cmd/          # Ponto de entrada da aplicação
 ├── config/       # Configurações e variáveis de ambiente
 ├── controller/   # Controladores da API
-├── middleware/   # Middlewares (auth, cache, rate limit)
+├── middleware/   # Middlewares (auth, rate limit)
 ├── model/        # Modelos e entidades
 ├── routes/       # Definição de rotas
 └── util/         # Utilitários e helpers
@@ -108,7 +105,6 @@ src/
 
 #### `config/`
 - Configurações do banco de dados
-- Configurações do Redis
 - Configurações do servidor
 - Variáveis de ambiente
 
@@ -120,7 +116,6 @@ src/
 
 #### `middleware/`
 - Autenticação
-- Cache
 - Rate limiting
 - Logging
 - Validação
@@ -176,11 +171,6 @@ DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=betting_db
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
 # JWT
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRATION=24h
@@ -192,9 +182,6 @@ LOG_FORMAT=json
 # Rate Limiting
 RATE_LIMIT_REQUESTS=100
 RATE_LIMIT_DURATION=1m
-
-# Cache
-CACHE_DURATION=5m
 ```
 
 ## 🔍 Funcionalidades Detalhadas
@@ -205,12 +192,6 @@ CACHE_DURATION=5m
 - Logout com invalidação de token
 - Proteção de rotas
 - Roles e permissões
-
-### Cache
-- Cache de respostas HTTP
-- Cache de consultas frequentes
-- Invalidação automática
-- TTL configurável
 
 ### Rate Limiting
 - Limite por IP
@@ -260,7 +241,6 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 
 - [Gin Web Framework](https://github.com/gin-gonic/gin)
 - [GORM](https://gorm.io/)
-- [Redis Go Client](https://github.com/redis/go-redis)
 - [JWT Go](https://github.com/golang-jwt/jwt)
 - [Zap Logger](https://github.com/uber-go/zap)
 - [Validator](https://github.com/go-playground/validator)
@@ -273,6 +253,6 @@ Para suporte, envie um email para lfdelimaa@gmail ou abra uma issue no GitHub.
 ## 🔄 Atualizações
 
 - **v1.0.0** - Lançamento inicial
-- **v1.1.0** - Adicionado sistema de cache
+- **v1.1.0** - Removido sistema de cache baseado em Redis
 - **v1.2.0** - Melhorias na autenticação
 - **v1.3.0** - Adicionado rate limiting 

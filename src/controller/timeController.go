@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
 	"github.com/lfdelima3/Backend-Go-Bet/src/model"
+	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
 // CreateTeam cria um novo time
@@ -18,7 +19,7 @@ func CreateTeam(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(team); err != nil {
+	if err := util.ValidateStruct(team); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -126,7 +127,7 @@ func UpdateTeam(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(updateData); err != nil {
+	if err := util.ValidateStruct(updateData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lfdelima3/Backend-Go-Bet/src/config"
 	"github.com/lfdelima3/Backend-Go-Bet/src/model"
+	"github.com/lfdelima3/Backend-Go-Bet/src/util"
 )
 
 // CreatePlayer cria um novo jogador
@@ -18,7 +19,7 @@ func CreatePlayer(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(player); err != nil {
+	if err := util.ValidateStruct(player); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
@@ -143,7 +144,7 @@ func UpdatePlayer(c *gin.Context) {
 	}
 
 	// Validação dos dados
-	if err := validate.Struct(updateData); err != nil {
+	if err := util.ValidateStruct(updateData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}

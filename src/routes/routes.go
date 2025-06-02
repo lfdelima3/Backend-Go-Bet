@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(r *gin.Engine, cache *util.Cache, db *gorm.DB, promotionController *controller.PromotionController) {
+func SetupRouter(r *gin.Engine, cache util.Cache, db *gorm.DB, promotionController *controller.PromotionController) {
 	// Configuração do rate limiter
 	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
 	r.Use(rateLimiter.RateLimit())
